@@ -1,0 +1,146 @@
+OKHttp原生的Get/Post请求
+
+~~##
+
+Get请求
+
+xml.
+
+<Button
+android:id="+@id/btn_get"
+android:layout_widht="match_parent"
+android:layout_height="wrap_content"
+android:text="get请求"/>
+
+<Button
+android:id="+@id/btn_post"
+android:layout_widht="match_parent"
+android:layout_height="wrap_content"
+android:text="post请求"/>
+
+<TextView
+android:id="@+id/tv_show"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:text="数据显示"/>
+
+Java.
+
+声明并findViewById
+
+public class OKHttp extends AppCompactActivity implements View.OnClickListener{
+
+    private Button btn_get;
+    private Button btn_post;
+    private TextView tv_show;
+
+    //声明消息
+    private Handler handler;
+
+    //声明Client客户端
+    private OKHttpClient client;
+
+    //定义常量
+    private static final int GET = 1;
+    private static final int Post = 2;
+
+    //声明Post数据格式
+    public static final MediaType JSON = MediaType.parse("application/json;utf-8");
+
+    @Overrid 
+    protected void onCreate(Bundle saveInstanceState){
+     super.onCreate(saveInstance);
+        setContentView(R.layout.activity_okhttp);
+
+        btn_get = (Button) findViewById(R.id.btn_get);
+        btn_post = (Button) findViewById(R.id.btn_post);
+        tv_show = (TextView) findViewById(R.id.tv_show);
+        //设置点击事件
+        btn_get.setOnClickListener(this);
+        btn_post.setOnClickListner(this);
+
+        handler = new Handler(){
+            @Override
+            public void handlerMessaeg(Message msg){
+                switch(msg.what){
+                    case Get:
+                    case Post:
+                        tv_show.setText((String) msg.obj);
+                    break;
+                }
+            }
+        }
+    }
+
+    @Overrid
+    public void onClick(View v){
+        switch(v.getId()){
+            case R.id.btn_get:
+            getDateFromGet();
+            break;
+            case R.id.btn_post:
+            getDataFromPost();
+            break;
+        }
+    }
+
+    //定义子线程get方法
+    private void getDataFromGet(){
+        new Thread(new Runnable(){
+           @Overrid
+           public void run(){
+               try{
+                   String result = get("http://www.baidu.com");
+                   Lod.i("---get",result);
+                   Message msg = new Message();
+                   msg.what = Get;
+                   msg.obj = result;
+                   handler.sendMessage(msg);
+               }catch(IOException e){
+                   e.printStraceTrace();
+               }
+           }
+        }).start();
+    }
+
+    //定义子线程post方法
+    private void getDataFromPost(){
+        new Thread(new Runnable(){
+            @Overrid
+            public void run(){
+                try{
+                    String result = post("http://www.baidu.com","json");
+                    Log.i("---post","result");
+                    Message msg = new Message();
+                    msg.what = Post;
+                    msg.obj = result;
+                    handler.sendMessage(msg);
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    //定义get访问数据方法
+    private String get(String url) throws IOException{
+        Request request = new Request.Builder()
+                        .url(url)
+                        .build();
+        Response response = client.newCall(request).execute();
+        return response.body().toString();
+    }
+    //定义post访问数据方法
+    private String post(String url,String json) throws IOException{
+        RequestBody body = RequestBody.create(JSON,json);
+        Request request = new Request.Builder()
+                        .url(url)
+                        .post(body)
+                        .build();
+        Response response = client.newCall(request).execute();
+        return response.body().toString();
+    }
+}
+
+
+
